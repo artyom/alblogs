@@ -40,7 +40,8 @@ func main() {
 	flag.IntVar(&args.MaxSamples, "n", args.MaxSamples, "load at most this `number` of candidate log files")
 	flag.StringVar(&args.Database, "db", "", "`path` to the database file; "+
 		"if empty, use a file in a temporary directory")
-	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is yyyy-mm-ddThh:mm")
+	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is yyyy-mm-ddThh:mm;\n"+
+		"if empty, take current time as a reference")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
 
 	var cleanup bool
@@ -75,17 +76,18 @@ func (args *runArgs) populate() error {
 		return errors.New("number of candidate log files must be a positive number")
 	}
 	if args.TimeString == "" {
-		return errors.New("please set -time")
+		args.time = time.Now().Add(-5 * time.Minute)
+	} else {
+		loc := time.Local
+		if args.UTC {
+			loc = time.UTC
+		}
+		t, err := time.ParseInLocation(timeLayout, args.TimeString, loc)
+		if err != nil {
+			return err
+		}
+		args.time = t
 	}
-	loc := time.Local
-	if args.UTC {
-		loc = time.UTC
-	}
-	t, err := time.ParseInLocation(timeLayout, args.TimeString, loc)
-	if err != nil {
-		return err
-	}
-	args.time = t
 	return nil
 }
 
