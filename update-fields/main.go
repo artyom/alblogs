@@ -95,6 +95,9 @@ func run(ctx context.Context) error {
 	if err := sc.Err(); err != nil {
 		return err
 	}
+	if len(columns) == 0 {
+		return errors.New("no columns found")
+	}
 	colsCount := make(map[string]int)
 	for _, name := range columns {
 		colsCount[name]++
