@@ -227,23 +227,47 @@ func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, d
 // databaseSchema returns SQL statements initializing database
 func databaseSchema(cols []string) []string {
 	var out []string
-	createStatement := new(strings.Builder)
-	indexStatement := new(strings.Builder)
-	createStatement.WriteString("create table if not exists logs(\n")
-	indexStatement.WriteString("create unique index if not exists idx1 on logs(\n")
-	for _, b := range []*strings.Builder{createStatement, indexStatement} {
-		for i, col := range cols {
-			b.WriteString("    '")
-			b.WriteString(col)
-			b.WriteByte('\'')
-			if i != len(cols)-1 {
-				b.WriteByte(',')
-			}
-			b.WriteByte('\n')
+
+	b := new(strings.Builder)
+	b.WriteString("create table if not exists logs(\n")
+	for i, col := range cols {
+		var colType string
+		switch col {
+		case "elb_status_code", "target_status_code",
+			"received_bytes", "sent_bytes",
+			"matched_rule_priority":
+			colType = "INTEGER"
+		case "request_processing_time", "target_processing_time", "response_processing_time":
+			colType = "REAL"
 		}
-		b.WriteByte(')')
-		out = append(out, b.String())
+		b.WriteString("    '")
+		b.WriteString(col)
+		b.WriteByte('\'')
+		if colType != "" {
+			b.WriteByte(' ')
+			b.WriteString(colType)
+		}
+		if i != len(cols)-1 {
+			b.WriteByte(',')
+		}
+		b.WriteByte('\n')
 	}
+	b.WriteByte(')')
+	out = append(out, b.String())
+
+	b.Reset()
+	b.WriteString("create unique index if not exists idx1 on logs(")
+	for i, col := range cols {
+		b.WriteByte('\'')
+		b.WriteString(col)
+		b.WriteByte('\'')
+		if i != len(cols)-1 {
+			b.WriteByte(',')
+		}
+	}
+	b.WriteByte(')')
+	out = append(out, b.String())
+
 	return out
 }
 
