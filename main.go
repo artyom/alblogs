@@ -40,7 +40,7 @@ func main() {
 	flag.IntVar(&args.MaxSamples, "n", args.MaxSamples, "load at most this `number` of candidate log files")
 	flag.StringVar(&args.Database, "db", "", "`path` to the database file; "+
 		"if empty, use a file in a temporary directory")
-	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is "+timeLayout)
+	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is yyyy-mm-ddThh:mm")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
 
 	var cleanup bool
