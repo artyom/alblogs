@@ -110,7 +110,7 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 	}
 
 	fullPrefix := fullS3prefix(args.time, meta.Prefix, meta.Account, meta.Region)
-	log.Println("fetching the list of candidate log files, this may take a while")
+	log.Println("Fetching candidate log files list, this may take a while")
 	keys, err := candidateKeys(ctx, s3Client, meta.Bucket, fullPrefix, args.time)
 	if err != nil {
 		return err
@@ -145,16 +145,18 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 		if i == args.MaxSamples {
 			break
 		}
-		log.Println("reading S3 object", k)
+		log.Printf("Processing s3://%s", path.Join(meta.Bucket, k))
 		if err := ingestLogFile(ctx, s3Client, meta.Bucket, k, db, cols); err != nil {
 			return fmt.Errorf("ingesting %q: %w", k, err)
 		}
 	}
-	log.Println("database file:", dbName)
 	_, _ = db.ExecContext(ctx, "PRAGMA optimize")
 	if err := db.Close(); err != nil {
 		return err
 	}
+	log.Print("For details on field description see")
+	log.Print("https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-syntax")
+	log.Println("Database file:", dbName)
 	if term.IsTerminal(0) && term.IsTerminal(1) {
 		if sqlitePath, err := exec.LookPath("sqlite3"); err == nil {
 			// cmd := exec.CommandContext(ctx, sqlitePath, dbName)
