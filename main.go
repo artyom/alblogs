@@ -385,6 +385,13 @@ func cacheDir() string {
 
 func tempDir() string { return filepath.Join(os.TempDir(), "alblogs") }
 
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintln(flag.CommandLine.Output(), "Usage: alblogs [flags] load-balancer-name")
+		flag.PrintDefaults()
+	}
+}
+
 var errUsage = errors.New("invalid usage")
 
 //go:embed fields.txt
