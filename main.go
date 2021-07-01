@@ -121,7 +121,7 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 
 	dbName := args.Database
 	if dbName == "" {
-		dbName = filepath.Join(tempDir(), "alblogs", albName+".db")
+		dbName = filepath.Join(tempDir(), albName+".db")
 		if err := os.MkdirAll(filepath.Dir(dbName), 0777); err != nil {
 			return err
 		}
