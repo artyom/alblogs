@@ -39,9 +39,10 @@ func main() {
 	args := runArgs{MaxSamples: 1}
 	flag.IntVar(&args.MaxSamples, "n", args.MaxSamples, "load at most this `number` of candidate log files")
 	flag.StringVar(&args.Database, "db", "", "`path` to the database file; "+
-		"if empty, use a file in a temporary directory")
+		"if empty, use a file in a temporary directory.\n"+
+		"The same database file may be reused between program runs.")
 	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is yyyy-mm-ddThh:mm;\n"+
-		"if empty, take current time as a reference")
+		"if empty, take reference time as few minutes to the past")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
 
 	var cleanup bool
