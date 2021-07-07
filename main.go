@@ -41,7 +41,8 @@ func main() {
 	flag.StringVar(&args.Database, "db", "", "`path` to the database file; "+
 		"if empty, use a file in a temporary directory.\n"+
 		"The same database file may be reused between program runs.")
-	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is yyyy-mm-ddThh:mm;\n"+
+	flag.StringVar(&args.TimeString, "time", "", "take log sample around this `time`, format is either "+
+		"hh:mm\nfor today, or yyyy-mm-ddThh:mm for an arbitrary date;\n"+
 		"if empty, take reference time as few minutes to the past")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
 
@@ -83,8 +84,13 @@ func (args *runArgs) populate() error {
 		if args.UTC {
 			loc = time.UTC
 		}
-		t, err := time.ParseInLocation(timeLayout, args.TimeString, loc)
-		if err != nil {
+		var t time.Time
+		var err error
+		if t, err = time.ParseInLocation("15:04", args.TimeString, loc); err == nil {
+			h, m, _ := t.Clock()
+			now := time.Now().In(loc)
+			t = time.Date(now.Year(), now.Month(), now.Day(), h, m, 0, 0, loc)
+		} else if t, err = time.ParseInLocation(timeLayout, args.TimeString, loc); err != nil {
 			return err
 		}
 		args.time = t
