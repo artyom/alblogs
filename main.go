@@ -141,8 +141,10 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 		return err
 	}
 	defer db.Close()
-	if _, err := db.ExecContext(ctx, "PRAGMA synchronous=off"); err != nil {
-		return err
+	for _, pragma := range []string{"PRAGMA journal_mode=WAL", "PRAGMA synchronous=off"} {
+		if _, err := db.ExecContext(ctx, pragma); err != nil {
+			return err
+		}
 	}
 	for _, statement := range databaseSchema(cols) {
 		if _, err := db.ExecContext(ctx, statement); err != nil {
