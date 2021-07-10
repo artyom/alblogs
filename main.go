@@ -184,6 +184,16 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 func logFields() []string { return strings.Split(strings.TrimSpace(fieldsFile), "\n") }
 
 func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, db *sql.DB, cols []string) error {
+	alreadyImported := func(ctx context.Context, db interface {
+		QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	}, key string) bool {
+		var sink int
+		_ = db.QueryRowContext(ctx, `SELECT 1 FROM s3objects WHERE basename=?`, path.Base(key)).Scan(&sink)
+		return sink == 1
+	}
+	if alreadyImported(ctx, db, key) {
+		return nil
+	}
 	obj, err := client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &key,
@@ -208,6 +218,11 @@ func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, d
 		return err
 	}
 	defer tx.Rollback()
+
+	if alreadyImported(ctx, tx, key) {
+		return nil
+	}
+
 	st, err := tx.PrepareContext(ctx, insertStatement(cols))
 	if err != nil {
 		return err
@@ -229,6 +244,12 @@ func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, d
 		if _, err := st.ExecContext(ctx, insertArgs...); err != nil {
 			return err
 		}
+	}
+	if _, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS s3objects(basename TEXT PRIMARY KEY)`); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO s3objects VALUES(?)`, path.Base(key)); err != nil {
+		return err
 	}
 	return tx.Commit()
 }
