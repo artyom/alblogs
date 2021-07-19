@@ -3,6 +3,7 @@ module github.com/artyom/alblogs
 go 1.17
 
 require (
+	github.com/artyom/status v0.1.0
 	github.com/aws/aws-sdk-go-v2/config v1.4.0
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.4.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.11.0

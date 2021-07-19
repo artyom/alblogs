@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/artyom/status"
 	"github.com/aws/aws-sdk-go-v2/config"
 	alb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -118,8 +119,12 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 		return err
 	}
 
+	line := new(status.Line)
+	line.SetOutput(os.Stderr)
+	defer line.Done()
+
 	fullPrefix := fullS3prefix(args.time, meta.Prefix, meta.Account, meta.Region)
-	log.Println("Fetching candidate log files list, this may take a while")
+	line.Print("Fetching candidate log files list, this may take a while")
 	keys, err := candidateKeys(ctx, s3Client, meta.Bucket, fullPrefix, args.time)
 	if err != nil {
 		return err
@@ -156,7 +161,7 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 		if i == args.MaxSamples {
 			break
 		}
-		log.Printf("Processing s3://%s", path.Join(meta.Bucket, k))
+		line.Printf("Processing log candidate %d", i+1)
 		if err := ingestLogFile(ctx, s3Client, meta.Bucket, k, db, cols); err != nil {
 			return fmt.Errorf("ingesting %q: %w", k, err)
 		}
@@ -165,8 +170,8 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 	if err := db.Close(); err != nil {
 		return err
 	}
-	log.Print("For details on field description see")
-	log.Print("https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-syntax")
+	line.Print("")
+	log.Print("For details on fields description see https://amzn.to/2VXnvAx")
 	log.Println("Database file:", dbName)
 	if term.IsTerminal(0) && term.IsTerminal(1) {
 		if sqlitePath, err := exec.LookPath("sqlite3"); err == nil {
