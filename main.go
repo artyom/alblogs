@@ -190,7 +190,7 @@ func logFields() []string { return strings.Split(strings.TrimSpace(fieldsFile), 
 
 func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, db *sql.DB, cols []string) error {
 	alreadyImported := func(ctx context.Context, db interface {
-		QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+		QueryRowContext(context.Context, string, ...any) *sql.Row
 	}, key string) bool {
 		var sink int
 		_ = db.QueryRowContext(ctx, `SELECT 1 FROM s3objects WHERE basename=?`, path.Base(key)).Scan(&sink)
@@ -233,7 +233,7 @@ func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, d
 		return err
 	}
 	defer st.Close()
-	var insertArgs []interface{}
+	var insertArgs []any
 	for {
 		fields, err := rd.Read()
 		if err != nil {
