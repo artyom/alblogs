@@ -289,26 +289,6 @@ func databaseSchema(cols []string) []string {
 	}
 	b.WriteByte(')')
 	out = append(out, b.String())
-
-	fs := newFieldSet(cols)
-
-	b.Reset()
-	if fs.has("request_creation_time", "trace_id") {
-		b.WriteString("create unique index if not exists idx0 on logs(request_creation_time, trace_id)")
-	} else {
-		b.WriteString("create unique index if not exists idx0 on logs(")
-		for i, col := range cols {
-			b.WriteByte('\'')
-			b.WriteString(col)
-			b.WriteByte('\'')
-			if i != len(cols)-1 {
-				b.WriteByte(',')
-			}
-		}
-		b.WriteByte(')')
-	}
-	out = append(out, b.String())
-
 	return out
 }
 
@@ -465,24 +445,5 @@ var errUsage = errors.New("invalid usage")
 
 //go:embed fields.txt
 var fieldsFile string
-
-type fieldSet map[string]struct{}
-
-func newFieldSet(ss []string) fieldSet {
-	fs := make(fieldSet)
-	for _, s := range ss {
-		fs[s] = struct{}{}
-	}
-	return fs
-}
-
-func (fs fieldSet) has(fields ...string) bool {
-	for _, s := range fields {
-		if _, ok := fs[s]; !ok {
-			return false
-		}
-	}
-	return true
-}
 
 //go:generate go run ./update-fields
