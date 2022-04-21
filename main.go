@@ -19,6 +19,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -243,8 +244,14 @@ func ingestLogFile(ctx context.Context, client *s3.Client, bucket, key string, d
 			return err
 		}
 		insertArgs = insertArgs[:0]
-		for i, v := range fields {
-			insertArgs = append(insertArgs, sql.Named(cols[i], v))
+		for _, v := range fields {
+			if hasOnlyDigits(v) {
+				if x, err := strconv.ParseUint(v, 10, 64); err == nil {
+					insertArgs = append(insertArgs, x)
+					continue
+				}
+			}
+			insertArgs = append(insertArgs, v)
 		}
 		if _, err := st.ExecContext(ctx, insertArgs...); err != nil {
 			return err
@@ -292,18 +299,15 @@ func databaseSchema(cols []string) []string {
 	return out
 }
 
-// insertStatement returns an INSERT SQL statement, expecting to take sql.Named
-// arguments named after columns.
+// insertStatement returns an INSERT SQL statement
 func insertStatement(cols []string) string {
 	b := new(strings.Builder)
 	b.WriteString("insert or ignore into logs values(\n")
-	for i, col := range cols {
-		b.WriteString("    @")
-		b.WriteString(col)
+	for i := range cols {
+		b.WriteByte('?')
 		if i != len(cols)-1 {
 			b.WriteByte(',')
 		}
-		b.WriteByte('\n')
 	}
 	b.WriteByte(')')
 	return b.String()
@@ -433,6 +437,20 @@ func cacheDir() string {
 }
 
 func tempDir() string { return filepath.Join(os.TempDir(), "alblogs") }
+
+func hasOnlyDigits(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for i := range s {
+		switch {
+		case '0' <= s[i] && s[i] <= '9':
+		default:
+			return false
+		}
+	}
+	return true
+}
 
 func init() {
 	flag.Usage = func() {
