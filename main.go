@@ -47,8 +47,8 @@ func main() {
 		"hh:mm\nfor today, or yyyy-mm-ddThh:mm for an arbitrary date;\n"+
 		"if empty, take reference time as few minutes to the past")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
-	flag.StringVar(&args.Profile, "p", "default", "the Shared Configuration profile to be used"+
-		"See https://docs.aws.amazon.com/sdkref/latest/guide/overview.html for more information")
+	flag.StringVar(&args.Profile, "p", "default", "the Shared Configuration `profile` to use\n"+
+		"See https://go.aws/3KQT4Q6 for more information")
 
 	var cleanup bool
 	flag.BoolVar(&cleanup, "clean", false, "clean cache and temporary files and exit")
