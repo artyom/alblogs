@@ -47,6 +47,8 @@ func main() {
 		"hh:mm\nfor today, or yyyy-mm-ddThh:mm for an arbitrary date;\n"+
 		"if empty, take reference time as few minutes to the past")
 	flag.BoolVar(&args.UTC, "utc", false, "treat time as UTC instead of local time zone")
+	flag.StringVar(&args.Profile, "p", "default", "the Shared Configuration profile to be used"+
+		"See https://docs.aws.amazon.com/sdkref/latest/guide/overview.html for more information")
 
 	var cleanup bool
 	flag.BoolVar(&cleanup, "clean", false, "clean cache and temporary files and exit")
@@ -72,6 +74,7 @@ type runArgs struct {
 	UTC        bool
 	TimeString string
 	Database   string
+	Profile    string
 	time       time.Time
 }
 
@@ -108,7 +111,7 @@ func run(ctx context.Context, args *runArgs, albName string) error {
 		return errUsage
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(args.Profile))
 	if err != nil {
 		return err
 	}
