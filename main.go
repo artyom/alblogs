@@ -27,6 +27,7 @@ import (
 	"github.com/artyom/status"
 	"github.com/aws/aws-sdk-go-v2/config"
 	alb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"golang.org/x/term"
 	_ "modernc.org/sqlite"
@@ -374,6 +375,13 @@ func loadMetadata(ctx context.Context, albClient *alb.Client, albName string) (*
 		Names: []string{albName},
 	})
 	if err != nil {
+		var notFound *types.LoadBalancerNotFoundException
+		if errors.As(err, &notFound) {
+			if known, _ := partialMatches(ctx, albClient, albName); len(known) != 0 {
+				return nil, fmt.Errorf("cannot find load balancer %q, here's the list of partial matches:\n\t%s",
+					albName, strings.Join(known, "\n\t"))
+			}
+		}
 		return nil, err
 	}
 	var albARN string
@@ -422,6 +430,29 @@ func loadMetadata(ctx context.Context, albClient *alb.Client, albName string) (*
 		_ = os.WriteFile(cacheFile, b, 0666)
 	}
 	return &meta, nil
+}
+
+func partialMatches(ctx context.Context, svc *alb.Client, partialName string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	var out []string
+	var marker *string
+	for {
+		res, err := svc.DescribeLoadBalancers(ctx, &alb.DescribeLoadBalancersInput{Marker: marker})
+		if err != nil {
+			return nil, err
+		}
+		for _, lb := range res.LoadBalancers {
+			if lb.LoadBalancerName != nil && strings.Contains(*lb.LoadBalancerName, partialName) {
+				out = append(out, *lb.LoadBalancerName)
+			}
+		}
+		if res.NextMarker == nil {
+			break
+		}
+		marker = res.NextMarker
+	}
+	return out, nil
 }
 
 type metadata struct {
