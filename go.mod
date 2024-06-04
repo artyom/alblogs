@@ -7,7 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.44
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.21.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.1
-	golang.org/x/term v0.13.0
+	golang.org/x/net v0.25.0
+	golang.org/x/term v0.20.0
 	modernc.org/sqlite v1.26.0
 )
 
@@ -35,7 +36,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.41.0 // indirect
